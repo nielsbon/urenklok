@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Uren invullen — Brasserie Bon &amp; Restaurant Fort H</title>
+<style>
+:root{
+  --bg:#f6f4f0; --panel:#ffffff; --ink:#1f2421; --muted:#6b7269; --line:#e2ddd4;
+  --accent:#2f5d50; --accent-soft:#e6efeb; --warn:#b4531f; --warn-soft:#fbeee5;
+  --bad:#a52f2f; --bad-soft:#faeaea; --good:#2f6b3a; --good-soft:#e9f2ea;
+  --radius:12px; --shadow:0 1px 2px rgba(31,36,33,.06),0 4px 14px rgba(31,36,33,.05);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer;touch-action:manipulation}
+input,select{font:inherit;color:inherit}
+
+header{background:var(--accent);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px}
+header h1{font-size:18px;margin-right:auto;display:flex;align-items:center;gap:9px}
+header h1 span.dot{width:9px;height:9px;border-radius:50%;background:#a8d5c4;display:inline-block}
+header .klok{font-variant-numeric:tabular-nums;font-size:15px;opacity:.9}
+.hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);color:#fff;
+  padding:9px 15px;border-radius:9px}
+.hbtn:active{background:rgba(255,255,255,.3)}
+
+main{padding:20px;max-width:1100px;margin:0 auto}
+.scherm{display:none}
+.scherm.aan{display:block}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden}
+.panel > h2{padding:15px 18px;border-bottom:1px solid var(--line);font-size:16px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel > h2 .sub{font-weight:400;color:var(--muted);font-size:14px}
+.panel-body{padding:18px}
+.note{font-size:14px;color:var(--muted);margin:10px 0 0}
+.hint{background:var(--accent-soft);border:1px solid #cfe2da;color:#274d42;padding:12px 14px;
+  border-radius:10px;font-size:14px;margin-bottom:16px}
+#alarm{background:var(--bad-soft);border:1px solid #eccaca;color:var(--bad);padding:14px 16px;
+  border-radius:10px;font-size:15px;margin-bottom:18px;display:none}
+#alarm.aan{display:block}
+
+.btn{background:var(--accent);color:#fff;border:none;padding:13px 20px;border-radius:10px;font-weight:600}
+.btn:active{filter:brightness(1.12)}
+.btn.ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn.danger{background:var(--bad)}
+.btn.groot{padding:18px 28px;font-size:19px;width:100%}
+.btn.sm{padding:8px 13px;font-size:15px}
+.btn:disabled{opacity:.4}
+
+/* namenraster: grote vlakken, ook met natte handen te raken */
+.namen{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.naamknop{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px 16px;text-align:left;min-height:92px;
+  display:flex;flex-direction:column;justify-content:center;gap:3px;color:var(--ink)}
+.naamknop:active{background:var(--accent-soft);border-color:var(--accent)}
+.naamknop .nm{font-weight:650;font-size:19px}
+.naamknop .meta{font-size:13px;color:var(--muted)}
+.naamknop .klaar{font-size:13px;color:var(--good);font-weight:600}
+.naamknop.gast{border-style:dashed}
+
+/* codeklavier */
+.klavier{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:320px;margin:0 auto}
+.klavier button{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:20px 0;font-size:26px;font-weight:600;box-shadow:var(--shadow)}
+.klavier button:active{background:var(--accent-soft)}
+.bolletjes{display:flex;gap:14px;justify-content:center;margin:22px 0}
+.bolletjes i{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent);display:block}
+.bolletjes i.vol{background:var(--accent)}
+
+/* tijdinvoer */
+.tijden{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end}
+.tijdveld{display:flex;flex-direction:column;gap:6px}
+.tijdveld label{font-size:14px;color:var(--muted);font-weight:600}
+.tijdveld input{padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:#fff;
+  font-size:26px;font-variant-numeric:tabular-nums;min-width:150px}
+.tijdveld input:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+.uitkomst{background:var(--accent-soft);border:1px solid #cfe2da;border-radius:10px;padding:16px;
+  margin:18px 0;font-size:17px}
+.uitkomst .groot{font-size:30px;font-weight:700;display:block;margin-top:6px}
+.uitkomst.fout{background:var(--bad-soft);border-color:#eccaca;color:var(--bad)}
+.uitkomst.let{background:var(--warn-soft);border-color:#eed7c4;color:var(--warn)}
+.keuze{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.keuze button{background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 18px;font-weight:600}
+.keuze button.aan{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+table{width:100%;border-collapse:collapse;font-size:15px}
+th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+  font-weight:650;background:#fbfaf8}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+.pill{font-size:12px;padding:4px 10px;border-radius:20px;font-weight:650;white-space:nowrap}
+.p-open{background:var(--warn-soft);color:var(--warn)}
+.p-ok{background:var(--good-soft);color:var(--good)}
+.p-ziek{background:var(--bad-soft);color:var(--bad)}
+.p-grijs{background:#eeece7;color:var(--muted)}
+.rij-acties{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+.veld{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.veld label{font-size:14px;color:var(--muted);font-weight:600}
+.veld input,.veld select{padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#fff}
+.tweekolom{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 20px}
+
+#toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(80px);
+  background:var(--ink);color:#fff;padding:13px 20px;border-radius:10px;opacity:0;
+  transition:all .25s;z-index:99;font-size:16px;max-width:90vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="dot"></span><span id="hZaak">Uren invullen</span></h1>
+  <span class="klok" id="hKlok"></span>
+  <button class="hbtn" id="btnLeiding">Leiding</button>
+  <button class="hbtn" id="btnBeheer">⚙</button>
+</header>
+
+<main>
+  <div id="alarm"></div>
+  <section class="scherm" id="s-setup"></section>
+  <section class="scherm" id="s-namen"></section>
+  <section class="scherm" id="s-code"></section>
+  <section class="scherm" id="s-dienst"></section>
+  <section class="scherm" id="s-klaar"></section>
+  <section class="scherm" id="s-leiding"></section>
+  <section class="scherm" id="s-beheer"></section>
+</main>
+
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   UREN INVULLEN OP DE ZAAK — losse iPad-versie
+   Werkt zonder internet: alles staat in de browser van dit apparaat.
+   Medewerkers komen uit een export van de urenadministratie; geaccordeerde
+   uren gaan er als bestand weer naartoe.
+   ============================================================ */
+
+const KEY='urenklok_v1';
+const MND_KORT=['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const DAG_NAAM=['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'];
+
+/* ---- kleine hulpjes, gelijk aan die van de urenadministratie ---- */
+function iso(d){const p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());}
+function pd(s){const[y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d);}
+function plusDagen(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+function vandaag(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function nlDatum(s){const d=pd(s);return d.getDate()+' '+MND_KORT[d.getMonth()]+' '+d.getFullYear();}
+function nlLang(s){const d=pd(s);return DAG_NAAM[d.getDay()]+' '+d.getDate()+' '+MND_KORT[d.getMonth()];}
+function num(v,d=2){return (Number(v)||0).toLocaleString('nl-NL',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function rond(n){return Math.round((Number(n)||0)*100)/100;}
+function uur(n){return num(rond(n),2);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('show'),2600);}
+function nuTijd(){const d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+function stempel(){const d=new Date();return iso(d)+' '+nuTijd();}
+
+/* tijd als 'HH:MM' <-> minuten na middernacht */
+function mins(t){const p=String(t||'').split(':');const h=Number(p[0]),m=Number(p[1]);
+  return (isFinite(h)&&isFinite(m))?h*60+m:null;}
+function hhmm(m){m=((Math.round(m)%1440)+1440)%1440;
+  return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');}
+
+/* ---------------- opslag ---------------- */
+function leeg(){
+  return {versie:1,zaak:'',zaken:['Brasserie Bon','Restaurant Fort H'],beheercode:'',
+          medewerkers:[],diensten:[],dagstatus:[],log:[]};
+}
+let S=leeg();
+let ui={scherm:'namen',mwId:null,datum:'',gast:false,code:'',
+        leidingId:null,leidingDatum:'',bewerk:null};
+
+/* Werkt de opslag van dit apparaat niet, dan is alles na het sluiten weg. Dat mag niemand
+   op de zaak pas merken als de uren van een week verdwenen zijn, dus het staat groot in beeld. */
+let opslagWerkt=true;
+function toetsOpslag(){
+  try{localStorage.setItem(KEY+'_toets','1');localStorage.removeItem(KEY+'_toets');return true;}
+  catch(e){return false;}
+}
+function meldOpslag(){
+  const el=document.getElementById('alarm');
+  if(opslagWerkt){el.classList.remove('aan');return;}
+  el.classList.add('aan');
+  el.innerHTML='<b>Let op: dit apparaat bewaart niets.</b> Wat hier wordt ingevuld is weg zodra '+
+    'het scherm gesloten wordt. Meestal komt dat doordat de pagina als los bestand geopend is, '+
+    'of doordat de browser privé staat. Gebruik hem zo niet voor echte uren — zeg het tegen Niels.';
+}
+function bewaar(){
+  if(!opslagWerkt)return;
+  try{localStorage.setItem(KEY,JSON.stringify(S));}
+  catch(e){opslagWerkt=false;meldOpslag();}
+}
+function herstel(){
+  try{const raw=localStorage.getItem(KEY);
+    if(raw)S=Object.assign(leeg(),JSON.parse(raw));}catch(e){}
+}
+function log(wat,wie){
+  S.log.push({t:stempel(),wat:wat,wie:wie||''});
+  if(S.log.length>500)S.log=S.log.slice(-500);
+}
+
+/* ---------------- medewerkers ---------------- */
+function mwById(id){return S.medewerkers.find(m=>m.id===id)||null;}
+function isZzp(m){return !!m&&m.dienstverband==='zzp';}
+function isOproep(m){return !!m&&m.dienstverband==='oproep';}
+function inDienstOp(m,datum){
+  if(m.start&&datum<m.start)return false;
+  if(m.eind&&datum>m.eind)return false;
+  return true;
+}
+function soortLabel(m){
+  if(isZzp(m))return "ZZP'er";
+  if(isOproep(m))return 'Oproepkracht';
+  return m.functie||'';
+}
+/* Wie staat er op het beginscherm: de eigen ploeg van deze zaak. Invallers van de andere
+   zaak staan achter de knop 'iemand van de andere zaak'. */
+function ploeg(datum,gast){
+  return S.medewerkers
+    .filter(m=>inDienstOp(m,datum))
+    .filter(m=>gast?m.zaak!==S.zaak:m.zaak===S.zaak)
+    .sort((a,b)=>a.naam.localeCompare(b.naam,'nl'));
+}
+
+/* ---------------- van de tijden naar de uren ----------------
+   Hier wordt alleen de AANWEZIGE tijd vastgelegd: van wanneer tot wanneer iemand er was.
+   De pauze blijft het werk van de administratie: bij vaste krachten staat in het profiel
+   hoeveel er per gewerkte dag van af gaat, en bij oproepkrachten en ZZP'ers gaat er niets af.
+   Eindtijd op of vóór de begintijd betekent dat de dienst over middernacht loopt; de uren
+   tellen op de dag waarop hij begon. */
+function berekenDienst(van,tot,m){
+  const v=mins(van);let t=mins(tot);
+  if(v===null||t===null)return null;
+  if(t<=v)t+=1440;
+  return {van:van,tot:tot,aanwezig:rond((t-v)/60),overMiddernacht:t>1440};
+}
+
+/* ---------------- diensten ---------------- */
+function dienstenVan(mwId,datum){
+  return S.diensten.filter(d=>d.mwId===mwId&&d.datum===datum)
+    .sort((a,b)=>mins(a.van)-mins(b.van));
+}
+function dienstenOpDag(datum){
+  return S.diensten.filter(d=>d.datum===datum&&d.zaak===S.zaak);
+}
+function dagstatusVan(mwId,datum){
+  return S.dagstatus.find(x=>x.mwId===mwId&&x.datum===datum&&x.zaak===S.zaak)||null;
+}
+function urenInWeek(mwId,datum){
+  const d=pd(datum),w=(d.getDay()+6)%7,ma=plusDagen(d,-w);
+  let t=0;
+  for(let i=0;i<7;i++){
+    const dag=iso(plusDagen(ma,i));
+    dienstenVan(mwId,dag).forEach(x=>t+=Number(x.aanwezig)||0);
+  }
+  return rond(t);
+}
+/* De dagen die nog op akkoord wachten, oudste eerst — dat is de stapel van de leidinggevende. */
+function openDagen(){
+  const set={};
+  S.diensten.forEach(d=>{if(d.zaak===S.zaak&&d.status==='open')set[d.datum]=true;});
+  return Object.keys(set).sort();
+}
+
+/* ============================================================
+   SCHERMEN
+   ============================================================ */
+function toon(naam){
+  ui.scherm=naam;
+  document.querySelectorAll('.scherm').forEach(s=>s.classList.remove('aan'));
+  const el=document.getElementById('s-'+naam);
+  if(el)el.classList.add('aan');
+  window.scrollTo(0,0);
+  if(naam==='setup')renderSetup();
+  if(naam==='namen')renderNamen();
+  if(naam==='code')renderCode();
+  if(naam==='dienst')renderDienst();
+  if(naam==='leiding')renderLeiding();
+  if(naam==='beheer')renderBeheer();
+  const klaar=S.zaak&&S.medewerkers.length;
+  document.getElementById('btnLeiding').style.display=klaar&&naam!=='leiding'?'':'none';
+  document.getElementById('btnBeheer').style.display=naam==='beheer'?'none':'';
+  document.getElementById('hZaak').textContent=S.zaak||'Uren invullen';
+}
+
+/* ---------------- 1. inrichten ---------------- */
+function renderSetup(){
+  document.getElementById('s-setup').innerHTML=`
+  <div class="panel">
+    <h2>Deze iPad inrichten <span class="sub">eenmalig, daarna hoef je hier niet meer te zijn</span></h2>
+    <div class="panel-body">
+      <div class="hint">Deze pagina staat los van de urenadministratie op je laptop. Hij haalt de namen
+      uit een export daarvan, en levert de goedgekeurde uren later als bestand weer terug.
+      Alles blijft op dit apparaat staan, ook zonder internet.</div>
+      <div class="veld">
+        <label>1. Op welke zaak staat deze iPad?</label>
+        <select id="setZaak">${S.zaken.map(z=>`<option${z===S.zaak?' selected':''}>${esc(z)}</option>`).join('')}</select>
+      </div>
+      <div class="veld">
+        <label>2. Namen inlezen uit de urenadministratie</label>
+        <input type="file" id="setBestand" accept=".json,application/json">
+        <p class="note">Kies het bestand dat je met <b>Bewaar bestand</b> uit de urenadministratie hebt
+        gehaald (bijvoorbeeld <i>urenadministratie-2026-2.json</i>). Er wordt alleen naar de namen,
+        de zaak en het soort contract gekeken — lonen en verlof blijven op je laptop.</p>
+        <p class="note" id="setStatus"><b>${S.medewerkers.length?S.medewerkers.length+' medewerkers ingelezen.':'Nog geen namen ingelezen.'}</b></p>
+      </div>
+      <div class="veld">
+        <label>3. Beheerderscode (voor dit instellingenscherm)</label>
+        <input type="text" id="setCode" inputmode="numeric" maxlength="6" value="${esc(S.beheercode)}" placeholder="bijv. 1234">
+        <p class="note">Zonder deze code kan niemand op de zaak bij de instellingen of de namenlijst.</p>
+      </div>
+      <button class="btn groot" id="setKlaar">Opslaan en beginnen</button>
+    </div>
+  </div>`;
+  document.getElementById('setBestand').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{leesAdministratie(JSON.parse(r.result));renderSetup();}
+      catch(err){toast('Dit bestand kan ik niet lezen.');}};
+    r.readAsText(f);
+  });
+  document.getElementById('setKlaar').addEventListener('click',()=>{
+    S.zaak=document.getElementById('setZaak').value;
+    S.beheercode=document.getElementById('setCode').value.trim();
+    if(!S.medewerkers.length){toast('Lees eerst de namen in.');return;}
+    if(!S.beheercode){toast('Vul een beheerderscode in.');return;}
+    log('iPad ingericht voor '+S.zaak);
+    bewaar();toon('namen');
+  });
+}
+/* Uit de export van de urenadministratie halen we alleen wat op de zaak nodig is.
+   Wie er al stond houdt zijn code en zijn rol als leidinggevende. */
+function leesAdministratie(d){
+  if(!d||!Array.isArray(d.medewerkers))throw new Error('geen medewerkers');
+  if(Array.isArray(d.zaken)&&d.zaken.length===2)S.zaken=d.zaken.slice();
+  const oud={};S.medewerkers.forEach(m=>oud[m.id]=m);
+  S.medewerkers=d.medewerkers.map(m=>{
+    const b=oud[m.id]||{};
+    return {id:m.id,naam:m.naam||'',zaak:m.zaak||'',functie:m.functie||'',
+            dienstverband:m.dienstverband||'vast',start:m.start||'',eind:m.eind||'',
+            leiding:!!b.leiding,code:b.code||''};
+  });
+  log(S.medewerkers.length+' namen ingelezen');
+  bewaar();
+  toast(S.medewerkers.length+' namen ingelezen');
+}
+
+/* ---------------- 2. namenscherm ---------------- */
+function renderNamen(){
+  const dat=iso(vandaag());
+  const lijst=ploeg(dat,ui.gast);
+  const open=openDagen().length;
+  let h=`<div class="hint">Klaar met je dienst? Tik op je naam en vul in hoe laat je begonnen en
+    gestopt bent.</div>`;
+  if(!lijst.length){
+    h+=`<div class="panel"><div class="panel-body"><p class="note">Er staat vandaag niemand
+      ${ui.gast?'van de andere zaak':'van '+esc(S.zaak)} in dienst.</p></div></div>`;
+  } else {
+    h+='<div class="namen">';
+    lijst.forEach(m=>{
+      const eigen=dienstenVan(m.id,dat);
+      const totaal=eigen.reduce((a,d)=>a+(Number(d.aanwezig)||0),0);
+      const st=dagstatusVan(m.id,dat);
+      h+=`<button class="naamknop${ui.gast?' gast':''}" data-mw="${m.id}">
+        <span class="nm">${esc(m.naam)}</span>
+        <span class="meta">${esc(soortLabel(m))}${ui.gast?' · '+esc(m.zaak):''}</span>
+        ${eigen.length?`<span class="klaar">✓ ${uur(totaal)} uur ingevuld</span>`
+          :(st&&st.soort==='ziek'?`<span class="meta">ziek gemeld</span>`:'')}
+      </button>`;
+    });
+    h+='</div>';
+  }
+  h+=`<div style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap">
+    <button class="btn ghost" id="knGast">${ui.gast?'Terug naar de eigen ploeg':'Iemand van de andere zaak'}</button>
+    ${open?`<span class="pill p-open" style="align-self:center">${open} dag${open===1?'':'en'} wacht${open===1?'t':'en'} op akkoord</span>`:''}
+  </div>`;
+  document.getElementById('s-namen').innerHTML=h;
+  document.querySelectorAll('#s-namen .naamknop').forEach(b=>
+    b.addEventListener('click',()=>startInvoer(b.dataset.mw)));
+  document.getElementById('knGast').addEventListener('click',()=>{ui.gast=!ui.gast;renderNamen();});
+}
+
+/* ---------------- 3. code ----------------
+   Alleen wie uren goedkeurt heeft een code nodig; die krijgt hij van de beheerder in het
+   instellingenscherm. Een medewerker tikt zijn naam aan en staat meteen bij de tijden. */
+function startInvoer(mwId){
+  ui.mwId=mwId;ui.bewerk=null;
+  /* Vul je na een late dienst ná middernacht in, dan gaat het bijna altijd om gisteren. */
+  const nu=new Date();
+  ui.datum=iso(nu.getHours()<6?plusDagen(vandaag(),-1):vandaag());
+  toon('dienst');
+}
+function renderCode(){
+  const m=mwById(ui.mwId);if(!m){toon('namen');return;}
+  const uitleg='Vier cijfers. Vergeten? Niels kan hem opnieuw instellen.';
+  document.getElementById('s-code').innerHTML=`
+  <div class="panel">
+    <h2>${esc(m.naam)} <span class="sub">je code</span></h2>
+    <div class="panel-body">
+      <p class="note" style="margin:0 0 4px">${esc(uitleg)}</p>
+      <div class="bolletjes">${[0,1,2,3].map(i=>`<i class="${ui.code.length>i?'vol':''}"></i>`).join('')}</div>
+      <div class="klavier">
+        ${[1,2,3,4,5,6,7,8,9].map(n=>`<button data-cijfer="${n}">${n}</button>`).join('')}
+        <button data-actie="terug">←</button>
+        <button data-cijfer="0">0</button>
+        <button data-actie="wis">wis</button>
+      </div>
+      <p class="note" style="text-align:center;margin-top:18px">
+        <button class="btn ghost sm" data-actie="stop">Toch niet</button></p>
+    </div>
+  </div>`;
+  document.querySelectorAll('#s-code [data-cijfer]').forEach(b=>
+    b.addEventListener('click',()=>tikCijfer(b.dataset.cijfer)));
+  document.querySelectorAll('#s-code [data-actie]').forEach(b=>
+    b.addEventListener('click',()=>{
+      const a=b.dataset.actie;
+      if(a==='terug')ui.code=ui.code.slice(0,-1);
+      if(a==='wis')ui.code='';
+      if(a==='stop'){ui.mwId=null;toon('leiding');return;}
+      renderCode();
+    }));
+}
+function tikCijfer(c){
+  if(ui.code.length>=4)return;
+  ui.code+=c;
+  if(ui.code.length<4){renderCode();return;}
+  const m=mwById(ui.mwId);
+  if(ui.code!==m.code){ui.code='';renderCode();toast('Die code klopt niet.');return;}
+  ui.code='';ui.leidingId=m.id;ui.leidingDatum='';ui.mwId=null;toon('leiding');
+}
+
+/* ---------------- 4. dienst invullen ---------------- */
+function renderDienst(){
+  const m=mwById(ui.mwId);if(!m){toon('namen');return;}
+  const gisteren=iso(plusDagen(vandaag(),-1));
+  const vd=iso(vandaag());
+  const bestaand=dienstenVan(m.id,ui.datum);
+  const b=ui.bewerk;
+  let h=`<div class="panel">
+    <h2>${esc(m.naam)} <span class="sub">welke dienst heb je gedraaid?</span></h2>
+    <div class="panel-body">
+      <div class="keuze">
+        <button data-dag="${gisteren}" class="${ui.datum===gisteren?'aan':''}">Gisteren<br><small>${esc(nlLang(gisteren))}</small></button>
+        <button data-dag="${vd}" class="${ui.datum===vd?'aan':''}">Vandaag<br><small>${esc(nlLang(vd))}</small></button>
+        <button data-dag="anders" class="${(ui.datum!==vd&&ui.datum!==gisteren)?'aan':''}">Andere dag…</button>
+      </div>`;
+  if(ui.datum!==vd&&ui.datum!==gisteren){
+    h+=`<div class="veld" style="max-width:260px"><label>Welke dag?</label>
+      <input type="date" id="dDatum" value="${ui.datum}" max="${vd}"></div>`;
+  }
+  if(!inDienstOp(m,ui.datum)){
+    h+=`<div class="uitkomst fout">Op ${esc(nlLang(ui.datum))} was ${esc(m.naam)} niet in dienst.
+      Klopt de dag wel?</div>`;
+  }
+  h+=`<div class="tijden">
+        <div class="tijdveld"><label>Begonnen om</label>
+          <input type="time" id="dVan" step="300" value="${esc(b?b.van:'')}"></div>
+        <div class="tijdveld"><label>Gestopt om</label>
+          <input type="time" id="dTot" step="300" value="${esc(b?b.tot:'')}"></div>
+      </div>
+      <div id="dUitkomst"></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="dOk" style="flex:1;min-width:200px;padding:16px">${b?'Wijziging opslaan':'Klaar, zo was het'}</button>
+        <button class="btn ghost" id="dStop">Terug</button>
+      </div>`;
+  if(bestaand.length){
+    h+=`<h3 style="margin-top:26px;font-size:15px">Al ingevuld voor ${esc(nlLang(ui.datum))}</h3>
+      <div class="scroll"><table><tr><th>Dienst</th><th class="num">Aanwezig</th>
+      <th>Status</th><th></th></tr>`;
+    bestaand.forEach(d=>{
+      const akk=d.status==='akkoord';
+      h+=`<tr><td>${esc(d.van)} – ${esc(d.tot)}${d.overMiddernacht?' <span class="pill p-grijs">volgende dag</span>':''}</td>
+        <td class="num"><b>${uur(d.aanwezig)}</b></td>
+        <td>${akk?'<span class="pill p-ok">goedgekeurd</span>':'<span class="pill p-open">wacht op akkoord</span>'}</td>
+        <td class="rij-acties">${akk?'<span class="note">vraag je leidinggevende</span>'
+          :`<button class="btn ghost sm" data-wijzig="${d.id}">Aanpassen</button>
+            <button class="btn ghost sm" data-weg="${d.id}">Weg</button>`}</td></tr>`;
+    });
+    h+=`</table></div>
+      <p class="note">Deze week staat er tot nu toe <b>${uur(urenInWeek(m.id,ui.datum))} uur</b> voor je genoteerd.</p>`;
+  }
+  h+='</div></div>';
+  document.getElementById('s-dienst').innerHTML=h;
+
+  document.querySelectorAll('#s-dienst [data-dag]').forEach(bt=>bt.addEventListener('click',()=>{
+    const w=bt.dataset.dag;
+    ui.datum=(w==='anders')?iso(plusDagen(vandaag(),-2)):w;
+    ui.bewerk=null;renderDienst();}));
+  const dd=document.getElementById('dDatum');
+  if(dd)dd.addEventListener('change',e=>{if(e.target.value){ui.datum=e.target.value;renderDienst();}});
+  ['dVan','dTot'].forEach(id=>document.getElementById(id).addEventListener('input',verversUitkomst));
+  document.getElementById('dOk').addEventListener('click',bewaarDienst);
+  document.getElementById('dStop').addEventListener('click',()=>{ui.bewerk=null;ui.mwId=null;toon('namen');});
+  document.querySelectorAll('#s-dienst [data-wijzig]').forEach(bt=>bt.addEventListener('click',()=>{
+    const d=S.diensten.find(x=>x.id===bt.dataset.wijzig);
+    ui.bewerk={id:d.id,van:d.van,tot:d.tot};renderDienst();}));
+  document.querySelectorAll('#s-dienst [data-weg]').forEach(bt=>bt.addEventListener('click',()=>{
+    const d=S.diensten.find(x=>x.id===bt.dataset.weg);
+    if(!d||!confirm('Deze dienst van '+d.van+' tot '+d.tot+' weghalen?'))return;
+    S.diensten=S.diensten.filter(x=>x.id!==d.id);
+    log('dienst verwijderd '+d.datum+' '+d.van+'-'+d.tot,mwById(d.mwId).naam);
+    bewaar();ui.bewerk=null;renderDienst();toast('Weggehaald.');}));
+  verversUitkomst();
+}
+function verversUitkomst(){
+  const m=mwById(ui.mwId);
+  const el=document.getElementById('dUitkomst');
+  if(!el||!m)return;
+  const van=document.getElementById('dVan').value,tot=document.getElementById('dTot').value;
+  if(!van||!tot){el.innerHTML=`<div class="uitkomst">Vul allebei de tijden in.</div>`;return;}
+  const r=berekenDienst(van,tot,m);
+  if(!r){el.innerHTML=`<div class="uitkomst fout">Die tijden begrijp ik niet.</div>`;return;}
+  if(r.aanwezig>16){el.innerHTML=`<div class="uitkomst fout">Dat is ${uur(r.aanwezig)} uur achter elkaar.
+    Dat klopt bijna zeker niet — kijk de tijden nog eens na.</div>`;return;}
+  const lang=r.aanwezig>12;
+  el.innerHTML=`<div class="uitkomst${lang?' let':''}">
+    Van <b>${esc(van)}</b> tot <b>${esc(tot)}</b>${r.overMiddernacht?' (de volgende ochtend)':''}
+    ben je aanwezig geweest:
+    <span class="groot">${uur(r.aanwezig)} uur</span>
+    ${lang?'<br><b>Let op:</b> dat is een lange dienst. Kloppen de tijden?':''}
+  </div>`;
+}
+function bewaarDienst(){
+  const m=mwById(ui.mwId);if(!m)return;
+  const van=document.getElementById('dVan').value,tot=document.getElementById('dTot').value;
+  if(!van||!tot){toast('Vul allebei de tijden in.');return;}
+  const r=berekenDienst(van,tot,m);
+  if(!r||r.aanwezig>16){toast('Kijk de tijden nog eens na.');return;}
+  if(r.aanwezig<=0){toast('Begin- en eindtijd zijn gelijk.');return;}
+  if(ui.bewerk){
+    const d=S.diensten.find(x=>x.id===ui.bewerk.id);
+    if(d&&d.status!=='akkoord'){
+      log('dienst gewijzigd '+d.datum+' '+d.van+'-'+d.tot+' → '+van+'-'+tot,m.naam);
+      Object.assign(d,r,{gewijzigdOp:stempel()});
+    }
+    ui.bewerk=null;
+  } else {
+    /* Dubbel invullen voorkomen: overlapt de nieuwe dienst met een bestaande, dan is het
+       bijna altijd dezelfde dienst die er al staat. */
+    const nieuwV=mins(van),nieuwT=mins(tot)<=mins(van)?mins(tot)+1440:mins(tot);
+    const botst=dienstenVan(m.id,ui.datum).some(d=>{
+      const v=mins(d.van),t=mins(d.tot)<=v?mins(d.tot)+1440:mins(d.tot);
+      return nieuwV<t&&v<nieuwT;});
+    if(botst&&!confirm('Er staat al een dienst die hierover heen valt. Toch nog een dienst erbij?'))return;
+    S.diensten.push(Object.assign({
+      id:uid(),mwId:m.id,naam:m.naam,datum:ui.datum,zaak:S.zaak,
+      status:'open',ingevoerdOp:stempel(),doorgegevenOp:''},r));
+    log('dienst ingevuld '+ui.datum+' '+van+'-'+tot+' ('+uur(r.aanwezig)+' uur aanwezig)',m.naam);
+  }
+  bewaar();
+  toon('klaar');
+  renderKlaar(m,r);
+}
+function renderKlaar(m,r){
+  document.getElementById('s-klaar').innerHTML=`
+  <div class="panel">
+    <div class="panel-body" style="text-align:center;padding:40px 20px">
+      <div style="font-size:52px;line-height:1">✓</div>
+      <h2 style="margin:14px 0 6px">Genoteerd, ${esc(m.naam.split(' ')[0])}</h2>
+      <p class="note" style="font-size:17px">${esc(nlLang(ui.datum))} · ${esc(r.van)} – ${esc(r.tot)} ·
+        <b>${uur(r.aanwezig)} uur aanwezig</b></p>
+      <p class="note">Deze week staat er nu <b>${uur(urenInWeek(m.id,ui.datum))} uur</b> voor je genoteerd.
+        Dat is de tijd dat je er was; de pauze gaat er in de administratie af.
+        Je leidinggevende kijkt het morgen na.</p>
+      <button class="btn groot" id="kOk" style="max-width:320px;margin:22px auto 0">Klaar</button>
+    </div>
+  </div>`;
+  document.getElementById('kOk').addEventListener('click',()=>{ui.mwId=null;toon('namen');});
+  clearTimeout(renderKlaar._t);
+  renderKlaar._t=setTimeout(()=>{if(ui.scherm==='klaar'){ui.mwId=null;toon('namen');}},12000);
+}
+
+/* ---------------- 5. accorderen ---------------- */
+function renderLeiding(){
+  const ld=ui.leidingId?mwById(ui.leidingId):null;
+  if(!ld){renderLeidingCode();return;}
+  const dagen=openDagen();
+  if(!ui.leidingDatum)ui.leidingDatum=dagen.length?dagen[0]:iso(vandaag());
+  const dat=ui.leidingDatum;
+  /* Iedereen die die dag in beeld hoort te zijn: de eigen ploeg, plus invallers van de
+     andere zaak die hier uren hebben ingevuld. */
+  const eigen=ploeg(dat,false);
+  const gasten=S.diensten.filter(d=>d.datum===dat&&d.zaak===S.zaak)
+    .map(d=>mwById(d.mwId)).filter(m=>m&&m.zaak!==S.zaak);
+  const lijst=eigen.concat(gasten.filter((m,i,a)=>a.indexOf(m)===i));
+  const open=S.diensten.filter(d=>d.datum===dat&&d.zaak===S.zaak&&d.status==='open');
+
+  let h=`<div class="panel">
+    <h2>Uren nakijken <span class="sub">${esc(ld.naam)} · ${esc(S.zaak)}</span>
+      <button class="btn ghost sm" id="lUit" style="margin-left:auto">Klaar</button></h2>
+    <div class="panel-body">
+      <div class="keuze">
+        ${dagen.map(d=>`<button data-dag="${d}" class="${d===dat?'aan':''}">${esc(nlLang(d))}
+          <br><small>${S.diensten.filter(x=>x.datum===d&&x.zaak===S.zaak&&x.status==='open').length} open</small></button>`).join('')}
+        <button data-dag="${iso(vandaag())}" class="${dat===iso(vandaag())&&!dagen.includes(dat)?'aan':''}">Vandaag</button>
+        <div class="tijdveld" style="justify-content:center">
+          <input type="date" id="lDatum" value="${dat}" max="${iso(vandaag())}"
+            style="padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:#fff"></div>
+      </div>
+      <div class="hint">Je kijkt naar <b>${esc(nlLang(dat))}</b>. Klopt een dienst niet, pas hem dan aan —
+      wat er eerst stond blijft zichtbaar. Wie niets heeft ingevuld kun je ziek melden of op
+      niet gewerkt zetten, dan is de dag dicht.</div>
+      <div class="scroll"><table>
+        <tr><th>Wie</th><th>Dienst</th><th class="num">Aanwezig</th><th>Status</th><th></th></tr>`;
+  lijst.forEach(m=>{
+    const ds=dienstenVan(m.id,dat).filter(d=>d.zaak===S.zaak);
+    const st=dagstatusVan(m.id,dat);
+    if(!ds.length){
+      h+=`<tr><td><b>${esc(m.naam)}</b>${m.zaak!==S.zaak?` <span class="pill p-grijs">${esc(m.zaak)}</span>`:''}
+          <div class="note">${esc(soortLabel(m))}</div></td>
+        <td colspan="2" class="note">niets ingevuld</td>
+        <td>${st?(st.soort==='ziek'?'<span class="pill p-ziek">ziek gemeld</span>'
+                                   :'<span class="pill p-grijs">niet gewerkt</span>'):''}</td>
+        <td class="rij-acties">${st
+          ?`<button class="btn ghost sm" data-status-weg="${m.id}">Terugdraaien</button>`
+          :`<button class="btn ghost sm" data-ziek="${m.id}">Was ziek</button>
+            <button class="btn ghost sm" data-vrij="${m.id}">Niet gewerkt</button>`}</td></tr>`;
+      return;
+    }
+    ds.forEach(d=>{
+      const akk=d.status==='akkoord';
+      const bew=ui.bewerk&&ui.bewerk.id===d.id;
+      h+=`<tr><td><b>${esc(m.naam)}</b>${m.zaak!==S.zaak?` <span class="pill p-grijs">${esc(m.zaak)}</span>`:''}
+        <div class="note">${esc(soortLabel(m))}</div></td>`;
+      if(bew){
+        /* De hele regel wordt één vak, anders knijpt het aanpasvak de rest van de tabel dicht. */
+        h+=`<td colspan="4"><div class="tijden" style="gap:10px">
+            <div class="tijdveld"><label>Van</label><input type="time" step="300" id="lVan" value="${esc(d.van)}" style="font-size:19px;min-width:118px"></div>
+            <div class="tijdveld"><label>Tot</label><input type="time" step="300" id="lTot" value="${esc(d.tot)}" style="font-size:19px;min-width:118px"></div>
+            <div class="tijdveld" style="flex:1;min-width:150px"><label>Waarom</label>
+              <input type="text" id="lReden" placeholder="bijv. later begonnen"
+                style="padding:13px;border:1px solid var(--line);border-radius:9px;width:100%"></div>
+            <button class="btn" data-opslaan="${d.id}">Opslaan</button>
+            <button class="btn ghost" data-annuleer="1">Terug</button>
+          </div></td></tr>`;
+        return;
+      }
+      h+=`<td>${esc(d.van)} – ${esc(d.tot)}${d.overMiddernacht?' <span class="pill p-grijs">volgende dag</span>':''}
+          ${d.origineel?`<div class="note">was ${esc(d.origineel.van)} – ${esc(d.origineel.tot)}${
+            d.reden?', '+esc(d.reden):''} (${esc(d.gewijzigdDoor||'')})</div>`:''}</td>
+        <td class="num"><b>${uur(d.aanwezig)}</b></td>
+        <td>${akk?`<span class="pill p-ok">akkoord</span>
+              <div class="note">${esc(d.akkoordDoor||'')}${d.zelfAkkoord?' (eigen uren)':''}</div>`
+             :'<span class="pill p-open">open</span>'}</td>
+        <td class="rij-acties">${akk?'':`
+          <button class="btn sm" data-akkoord="${d.id}">Akkoord</button>
+          <button class="btn ghost sm" data-bewerk="${d.id}">Aanpassen</button>`}</td></tr>`;
+    });
+  });
+  const totaal=S.diensten.filter(d=>d.datum===dat&&d.zaak===S.zaak)
+    .reduce((a,d)=>a+(Number(d.aanwezig)||0),0);
+  h+=`<tr class="total"><td colspan="2"><b>Totaal aanwezig ${esc(nlLang(dat))}</b></td>
+      <td class="num"><b>${uur(totaal)}</b></td><td colspan="2"></td></tr></table></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px">
+      <button class="btn" id="lAlles"${open.length?'':' disabled'}>Alles akkoord (${open.length})</button>
+      <button class="btn ghost" id="lDoorgeven">Uren doorgeven naar de administratie</button>
+    </div>
+    <p class="note">Hier staat de <b>aanwezige</b> tijd. De pauze haalt de administratie er later af,
+      volgens wat er in het profiel van die medewerker staat; bij oproepkrachten en ZZP'ers gaat er
+      niets af. Doorgeven maakt een bestand met alles wat goedgekeurd is en nog niet eerder is
+      doorgegeven. Dat bestand lees je op de laptop in de urenadministratie in.</p>
+  </div></div>`;
+  document.getElementById('s-leiding').innerHTML=h;
+
+  document.getElementById('lUit').addEventListener('click',()=>{ui.leidingId=null;ui.bewerk=null;toon('namen');});
+  document.querySelectorAll('#s-leiding [data-dag]').forEach(b=>b.addEventListener('click',()=>{
+    ui.leidingDatum=b.dataset.dag;ui.bewerk=null;renderLeiding();}));
+  const ldat=document.getElementById('lDatum');
+  if(ldat)ldat.addEventListener('change',e=>{
+    if(e.target.value){ui.leidingDatum=e.target.value;ui.bewerk=null;renderLeiding();}});
+  document.querySelectorAll('#s-leiding [data-akkoord]').forEach(b=>b.addEventListener('click',()=>
+    keurGoed([S.diensten.find(x=>x.id===b.dataset.akkoord)],ld)));
+  document.getElementById('lAlles').addEventListener('click',()=>{
+    if(!open.length)return;
+    if(!confirm('Alle '+open.length+' openstaande diensten van '+nlLang(dat)+' goedkeuren?'))return;
+    keurGoed(open,ld);});
+  document.querySelectorAll('#s-leiding [data-bewerk]').forEach(b=>b.addEventListener('click',()=>{
+    ui.bewerk={id:b.dataset.bewerk};renderLeiding();}));
+  document.querySelectorAll('#s-leiding [data-annuleer]').forEach(b=>b.addEventListener('click',()=>{
+    ui.bewerk=null;renderLeiding();}));
+  document.querySelectorAll('#s-leiding [data-opslaan]').forEach(b=>b.addEventListener('click',()=>{
+    const d=S.diensten.find(x=>x.id===b.dataset.opslaan);
+    const van=document.getElementById('lVan').value,tot=document.getElementById('lTot').value;
+    const reden=document.getElementById('lReden').value.trim();
+    const m=mwById(d.mwId);
+    const r=berekenDienst(van,tot,m);
+    if(!r||r.aanwezig<=0||r.aanwezig>16){toast('Kijk de tijden nog eens na.');return;}
+    if(!d.origineel)d.origineel={van:d.van,tot:d.tot};
+    Object.assign(d,r,{gewijzigdDoor:ld.naam,gewijzigdOp:stempel(),reden:reden});
+    log('dienst aangepast '+d.datum+' → '+van+'-'+tot+(reden?' ('+reden+')':''),m.naam+' door '+ld.naam);
+    ui.bewerk=null;bewaar();renderLeiding();toast('Aangepast.');}));
+  document.querySelectorAll('#s-leiding [data-ziek]').forEach(b=>b.addEventListener('click',()=>
+    zetDagstatus(b.dataset.ziek,'ziek',ld)));
+  document.querySelectorAll('#s-leiding [data-vrij]').forEach(b=>b.addEventListener('click',()=>
+    zetDagstatus(b.dataset.vrij,'nietgewerkt',ld)));
+  document.querySelectorAll('#s-leiding [data-status-weg]').forEach(b=>b.addEventListener('click',()=>{
+    S.dagstatus=S.dagstatus.filter(x=>!(x.mwId===b.dataset.statusWeg&&x.datum===ui.leidingDatum&&x.zaak===S.zaak));
+    bewaar();renderLeiding();}));
+  document.getElementById('lDoorgeven').addEventListener('click',doorgeven);
+}
+function keurGoed(lijst,ld){
+  lijst.filter(Boolean).forEach(d=>{
+    if(d.status==='akkoord')return;
+    d.status='akkoord';d.akkoordDoor=ld.naam;d.akkoordOp=stempel();
+    d.zelfAkkoord=(d.mwId===ld.id);
+    log('akkoord '+d.datum+' '+d.van+'-'+d.tot+' ('+uur(d.aanwezig)+' uur aanwezig)'+(d.zelfAkkoord?' — eigen uren':''),
+      d.naam+' door '+ld.naam);
+  });
+  bewaar();renderLeiding();toast(lijst.length===1?'Akkoord.':lijst.length+' diensten akkoord.');
+}
+function zetDagstatus(mwId,soort,ld){
+  const m=mwById(mwId);
+  S.dagstatus=S.dagstatus.filter(x=>!(x.mwId===mwId&&x.datum===ui.leidingDatum&&x.zaak===S.zaak));
+  S.dagstatus.push({id:uid(),mwId:mwId,naam:m.naam,datum:ui.leidingDatum,zaak:S.zaak,
+    soort:soort,door:ld.naam,op:stempel(),doorgegevenOp:''});
+  log((soort==='ziek'?'ziek gemeld ':'niet gewerkt ')+ui.leidingDatum,m.naam+' door '+ld.naam);
+  bewaar();renderLeiding();
+  toast(soort==='ziek'?'Ziek genoteerd — de administratie maakt er een ziekmelding van.':'Genoteerd.');
+}
+/* Wie mag accorderen logt in met zijn eigen code. */
+function renderLeidingCode(){
+  const bazen=S.medewerkers.filter(m=>m.leiding);
+  if(!bazen.length){
+    document.getElementById('s-leiding').innerHTML=`<div class="panel"><div class="panel-body">
+      <p>Er is nog niemand aangewezen die uren mag goedkeuren. Dat doe je bij ⚙ Instellingen.</p>
+      <button class="btn" onclick="toon('namen')">Terug</button></div></div>`;
+    return;
+  }
+  document.getElementById('s-leiding').innerHTML=`<div class="panel">
+    <h2>Uren nakijken <span class="sub">wie ben je?</span></h2>
+    <div class="panel-body">
+      <div class="namen">${bazen.map(m=>`<button class="naamknop" data-baas="${m.id}">
+        <span class="nm">${esc(m.naam)}</span><span class="meta">${esc(soortLabel(m))}</span>
+        ${m.code?'':'<span class="meta">nog geen code — zie ⚙</span>'}</button>`).join('')}</div>
+      <button class="btn ghost" style="margin-top:16px" onclick="toon('namen')">Terug</button>
+    </div></div>`;
+  document.querySelectorAll('#s-leiding [data-baas]').forEach(b=>b.addEventListener('click',()=>{
+    const m=mwById(b.dataset.baas);
+    if(!m.code){toast('Voor '+m.naam+' is nog geen code ingesteld — dat doet Niels bij ⚙.');return;}
+    ui.mwId=m.id;ui.code='';toon('code');}));
+}
+
+/* ---------------- 6. doorgeven ---------------- */
+function doorgeven(){
+  const ds=S.diensten.filter(d=>d.status==='akkoord'&&!d.doorgegevenOp&&d.zaak===S.zaak);
+  const st=S.dagstatus.filter(x=>!x.doorgegevenOp&&x.zaak===S.zaak);
+  if(!ds.length&&!st.length){toast('Er is niets nieuws om door te geven.');return;}
+  const totaal=ds.reduce((a,d)=>a+(Number(d.aanwezig)||0),0);
+  if(!confirm(ds.length+' goedgekeurde diensten ('+uur(totaal)+' uur aanwezig)'+
+    (st.length?' en '+st.length+' ziek-/vrijmeldingen':'')+' klaarzetten als bestand?'))return;
+  const nu=stempel();
+  /* 'aanwezig' is de tijd dat iemand er was. De pauze zit er NIET af; die past de
+     urenadministratie toe volgens het profiel van de medewerker. */
+  const pak={bron:'urenklok',versie:1,eenheid:'aanwezige uren, zonder pauze-aftrek',
+             zaak:S.zaak,gemaakt:nu,diensten:ds,dagstatus:st};
+  const blob=new Blob([JSON.stringify(pak,null,1)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='urenklok-'+S.zaak.replace(/[^A-Za-z0-9]/g,'')+'-'+iso(new Date())+'.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  ds.forEach(d=>d.doorgegevenOp=nu);st.forEach(x=>x.doorgegevenOp=nu);
+  log('doorgegeven: '+ds.length+' diensten, '+uur(totaal)+' uur aanwezig');
+  bewaar();
+  if(ui.scherm==='leiding')renderLeiding();else renderBeheer();
+  toast('Bestand klaargezet.');
+}
+
+/* ---------------- 7. instellingen ---------------- */
+function renderBeheer(){
+  const open=S.diensten.filter(d=>d.status==='akkoord'&&!d.doorgegevenOp&&d.zaak===S.zaak).length;
+  let h=`<div class="panel">
+    <h2>Instellingen <span class="sub">${esc(S.zaak)}</span>
+      <button class="btn ghost sm" id="bTerug" style="margin-left:auto">Terug</button></h2>
+    <div class="panel-body">
+      <div class="tweekolom">
+        <div class="veld"><label>Deze iPad staat op</label>
+          <select id="bZaak">${S.zaken.map(z=>`<option${z===S.zaak?' selected':''}>${esc(z)}</option>`).join('')}</select></div>
+        <div class="veld"><label>Beheerderscode</label>
+          <input type="text" id="bCode" inputmode="numeric" maxlength="6" value="${esc(S.beheercode)}"></div>
+      </div>
+      <p class="note">Op de iPad wordt alleen de <b>aanwezige</b> tijd vastgelegd. De pauze-aftrek
+      gebeurt in de urenadministratie, volgens het profiel van de medewerker; oproepkrachten en
+      ZZP'ers krijgen standaard geen aftrek.</p>
+      <button class="btn" id="bOpslaan">Opslaan</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Wie mag uren goedkeuren? <span class="sub">zet een vinkje bij de leidinggevenden</span></h2>
+    <div class="panel-body">
+      <p class="note" style="margin:0 0 12px">Medewerkers vullen hun uren in zonder code. Alleen wie
+      mag goedkeuren heeft er één nodig; die stel je hier voor hem in.</p>
+      <div class="scroll"><table>
+      <tr><th>Naam</th><th>Zaak</th><th>Soort</th><th>Code</th><th>Mag goedkeuren</th><th></th></tr>`;
+  S.medewerkers.slice().sort((a,b)=>(a.zaak||'').localeCompare(b.zaak||'','nl')||a.naam.localeCompare(b.naam,'nl'))
+    .forEach(m=>{
+      h+=`<tr><td><b>${esc(m.naam)}</b></td><td class="note">${esc(m.zaak)}</td>
+        <td class="note">${esc(soortLabel(m))}</td>
+        <td>${m.leiding?(m.code?'<span class="pill p-ok">ingesteld</span>'
+                               :'<span class="pill p-open">nog niet</span>'):'<span class="note">—</span>'}</td>
+        <td><input type="checkbox" data-leiding="${m.id}"${m.leiding?' checked':''} style="width:22px;height:22px"></td>
+        <td class="rij-acties">${m.leiding?`<button class="btn ghost sm" data-codezet="${m.id}">${
+          m.code?'Andere code':'Code instellen'}</button>`:''}</td></tr>`;
+    });
+  h+=`</table></div></div></div>
+
+  <div class="panel">
+    <h2>Namen bijwerken en uren doorgeven</h2>
+    <div class="panel-body">
+      <div class="veld"><label>Nieuwe export uit de urenadministratie inlezen</label>
+        <input type="file" id="bBestand" accept=".json,application/json">
+        <p class="note">Doe dit als er iemand bij is gekomen of uit dienst is. Codes en vinkjes blijven staan.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="bDoor">Uren doorgeven${open?' ('+open+' klaar)':''}</button>
+        <button class="btn ghost" id="bAlles">Alles op deze iPad bewaren</button>
+      </div>
+      <p class="note">De tweede knop maakt een kopie van alles wat op deze iPad staat — doe dat af en
+      toe, want als de browsergegevens van dit apparaat gewist worden, is de rest weg.</p>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Wat er gebeurd is <span class="sub">laatste 40 regels</span></h2>
+    <div class="panel-body"><div class="scroll"><table>
+      ${S.log.slice(-40).reverse().map(r=>`<tr><td class="note" style="white-space:nowrap">${esc(r.t)}</td>
+        <td>${esc(r.wat)}</td><td class="note">${esc(r.wie)}</td></tr>`).join('')||'<tr><td class="note">nog niets</td></tr>'}
+    </table></div></div>
+  </div>`;
+  document.getElementById('s-beheer').innerHTML=h;
+
+  document.getElementById('bTerug').addEventListener('click',()=>toon('namen'));
+  document.getElementById('bOpslaan').addEventListener('click',()=>{
+    S.zaak=document.getElementById('bZaak').value;
+    S.beheercode=document.getElementById('bCode').value.trim()||S.beheercode;
+    log('instellingen aangepast');bewaar();renderBeheer();toast('Opgeslagen.');});
+  document.querySelectorAll('#s-beheer [data-leiding]').forEach(c=>c.addEventListener('change',()=>{
+    const m=mwById(c.dataset.leiding);m.leiding=c.checked;
+    if(!c.checked)m.code='';
+    log((c.checked?'mag voortaan goedkeuren':'mag niet meer goedkeuren'),m.naam);
+    bewaar();renderBeheer();}));
+  document.querySelectorAll('#s-beheer [data-codezet]').forEach(b=>b.addEventListener('click',()=>{
+    const m=mwById(b.dataset.codezet);
+    const c=prompt('Vier cijfers voor '+m.naam+':',m.code||'');
+    if(c===null)return;
+    if(!/^[0-9]{4}$/.test(c.trim())){toast('Vier cijfers graag.');return;}
+    m.code=c.trim();log('code ingesteld',m.naam);bewaar();renderBeheer();
+    toast('Code van '+m.naam+' ingesteld.');}));
+  document.getElementById('bBestand').addEventListener('change',e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{try{leesAdministratie(JSON.parse(r.result));renderBeheer();}
+      catch(err){toast('Dit bestand kan ik niet lezen.');}};
+    r.readAsText(f);});
+  document.getElementById('bDoor').addEventListener('click',doorgeven);
+  document.getElementById('bAlles').addEventListener('click',()=>{
+    const blob=new Blob([JSON.stringify(S,null,1)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download='urenklok-kopie-'+iso(new Date())+'.json';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    toast('Kopie klaargezet.');});
+}
+
+/* ---------------- start ---------------- */
+document.getElementById('btnLeiding').addEventListener('click',()=>{
+  ui.leidingId=null;ui.bewerk=null;toon('leiding');});
+document.getElementById('btnBeheer').addEventListener('click',()=>{
+  if(S.beheercode){
+    const c=prompt('Beheerderscode:');
+    if(c===null)return;
+    if(c!==S.beheercode){toast('Die code klopt niet.');return;}
+  }
+  toon('beheer');});
+function tikTak(){
+  const d=new Date();
+  document.getElementById('hKlok').textContent=
+    DAG_NAAM[d.getDay()]+' '+d.getDate()+' '+MND_KORT[d.getMonth()]+' · '+nuTijd();
+}
+opslagWerkt=toetsOpslag();
+meldOpslag();
+herstel();
+tikTak();setInterval(tikTak,20000);
+toon(S.zaak&&S.medewerkers.length?'namen':'setup');
+</script>
+</body>
+</html>
